@@ -51,5 +51,3 @@ class IPAddressTest < Test::Unit::TestCase
   end
 
 end
-
-
