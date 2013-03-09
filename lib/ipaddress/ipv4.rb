@@ -649,8 +649,11 @@ module IPAddress;
     #
     def supernet(new_prefix)
       raise ArgumentError, "New prefix must be smaller than existing prefix" if new_prefix >= @prefix.to_i
-      return self.class.new("0.0.0.0/0") if new_prefix < 1
-      return self.class.new(@address+"/#{new_prefix}").network
+      if new_prefix < 1
+        self.class.new("0.0.0.0/0")
+      else
+        self.class.new(@address+"/#{new_prefix}").network
+      end
     end
 
     #
