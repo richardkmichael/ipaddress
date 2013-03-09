@@ -63,9 +63,9 @@ task :default => :test
 desc "Open an IRB session preloaded with this library."
 task :console do
   if ! %x( which pry ).strip.empty?
-    sh "pry -I lib -r ipaddress"
+    system "pry -I lib -r ipaddress"
   else
-    sh "irb -rubygems -I lib -r ipaddress.rb"
+    system "irb -rubygems -I lib -r ipaddress"
   end
 end
 
