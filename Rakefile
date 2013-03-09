@@ -62,7 +62,11 @@ task :default => :test
 
 desc "Open an IRB session preloaded with this library."
 task :console do
-  sh "irb -rubygems -I lib -r ipaddress.rb"
+  if ! %x( which pry ).strip.empty?
+    sh "pry -I lib -r ipaddress"
+  else
+    sh "irb -rubygems -I lib -r ipaddress.rb"
+  end
 end
 
 desc "Display FIXME, TODO and TBD tags in the code."
