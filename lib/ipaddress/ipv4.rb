@@ -35,7 +35,7 @@ module IPAddress;
     #
     # Regular expression to match an IPv4 address
     #
-    REGEXP = Regexp.new(/((25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)/)
+    DOTTED_NOTATION = Regexp.new(/((25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)/)
     
     #
     # Creates a new IPv4 address object.
@@ -60,8 +60,8 @@ module IPAddress;
     #   IPAddress::IPv4.new "10.0.0.1/8"
     #   IPAddress::IPv4.new "10.0.0.1/255.0.0.0"
     #
-    def initialize(str)
-      ip, netmask = str.split("/")
+    def initialize(string)
+      ip, netmask = string.split("/")
       
       # Check the ip and remove white space
       if IPAddress.valid_ipv4?(ip)
@@ -69,9 +69,8 @@ module IPAddress;
       else
         raise ArgumentError, "Invalid IP #{ip.inspect}"
       end
-      
-      # Check the netmask
-      if netmask  # netmask is defined
+
+      if netmask
         netmask.strip!
         if netmask =~ /^\d{1,2}$/  # netmask in cidr format 
           @prefix = Prefix32.new(netmask.to_i)
@@ -84,12 +83,9 @@ module IPAddress;
         @prefix = Prefix32.new(32)
       end
 
-      # Array formed with the IP octets
-      @octets = @address.split(".").map{|i| i.to_i}
-      # 32 bits interger containing the address
-      @u32 = (@octets[0]<< 24) + (@octets[1]<< 16) + (@octets[2]<< 8) + (@octets[3])
-      
-    end # def initialize
+      @octets = @address.split(".").map{ |octet| octet.to_i }
+      @u32    = (@octets[0] << 24) + (@octets[1] << 16) + (@octets[2] << 8) + (@octets[3])
+    end
 
     #
     # Returns the address portion of the IPv4 object
@@ -153,7 +149,7 @@ module IPAddress;
     def octets
       @octets
     end
-    
+
     #
     # Returns a string with the address portion of 
     # the IPv4 object
@@ -229,7 +225,7 @@ module IPAddress;
     end
     alias_method :to_i, :u32
     alias_method :to_u32, :u32
-    
+
     #
     # Returns the address portion of an IPv4 object
     # in a network byte order format.
@@ -296,7 +292,7 @@ module IPAddress;
     def broadcast
       self.class.parse_u32(broadcast_u32, @prefix)
     end
-    
+
     #
     # Checks if the IP address is actually a network
     #
@@ -726,8 +722,8 @@ module IPAddress;
     #   p (ip1 + ip2).map {|i| i.to_string}
     #     #=> ["10.0.0.0/24","10.0.2.0/24"]
     #
-    def +(oth)
-      aggregate(*[self,oth].sort.map{|i| i.network})
+    def +(other)
+      aggregate(*[ self, other ].sort.map { |ip_address| ip_address.network })
     end
 
     #
@@ -811,7 +807,7 @@ module IPAddress;
     #     #=> "10.0.0.0/8"
     #
     def self.parse_u32(u32, prefix=32)
-      self.new([u32].pack("N").unpack("C4").join(".")+"/#{prefix}")
+      new([u32].pack("N").unpack("C4").join(".")+"/#{prefix}")
     end
 
     #
@@ -828,7 +824,7 @@ module IPAddress;
     #     #=> "172.16.10.1/24"
     #
     def self.parse_data(str, prefix=32)
-      self.new(str.unpack("C4").join(".")+"/#{prefix}")
+      new(str.unpack("C4").join(".")+"/#{prefix}")
     end
 
     #
@@ -844,7 +840,7 @@ module IPAddress;
     #     #=> "172.16.10.1"
     #
     def self.extract(str)
-      self.new REGEXP.match(str).to_s
+      new DOTTED_NOTATION.match(str).to_s
     end
     
     #
@@ -961,13 +957,10 @@ module IPAddress;
         raise ArgumentError, "Invalid IP #{ip.inspect}"
       end
       prefix = CLASSFUL.find{|h,k| h === ("%.8b" % address.to_i)}.last
-      self.new "#{address}/#{prefix}"
+      new "#{address}/#{prefix}"
     end
 
-    #
-    # private methods
-    #
-    private
+  private
 
     def newprefix(num)
       num.upto(32) do |i|
@@ -989,14 +982,14 @@ module IPAddress;
       return dup.reverse
     end
 
-    def aggregate(ip1,ip2)
-      return [ip1] if ip1.include? ip2
+    def aggregate(network1, network2)
+      return [network1] if network1.include? network2
 
-      snet = ip1.supernet(ip1.prefix-1)
-      if snet.include_all?(ip1, ip2) && ((ip1.size + ip2.size) == snet.size)
+      snet = network1.supernet(network1.prefix - 1)
+      if snet.include_all?(network1, network2) && ((network1.size + network2.size) == snet.size)
         return [snet]
       else
-        return [ip1, ip2]
+        return [network1, network2]
       end
     end
   end # class IPv4
