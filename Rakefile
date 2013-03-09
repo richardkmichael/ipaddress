@@ -18,14 +18,12 @@ begin
     EOD
   end
 rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
-end
+  message = 'Jeweler tasks "build", "version", "gemspec" are not available, "gem install jeweler".'
 
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/*_test.rb'
-  test.verbose = true
+  desc message
+  task :"[jeweler]" do
+    abort message
+  end
 end
 
 begin
@@ -36,48 +34,51 @@ begin
     test.verbose = true
   end
 rescue LoadError
+  message = 'RCov tasks are not available, "gem install spicycode-rcov".'
+
+  desc message
   task :rcov do
-    abort "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
+    abort message
   end
 end
 
+require 'rake/testtask'
+Rake::TestTask.new(:test) do |test|
+  test.libs << 'lib' << 'test'
+  test.pattern = 'test/**/*_test.rb'
+  test.verbose = true
+end
 
-task :default => :test
-
-require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
-  if File.exist?('VERSION.yml')
-    config = YAML.load(File.read('VERSION.yml'))
-    version = "#{config[:major]}.#{config[:minor]}.#{config[:patch]}"
-  else
-    version = ""
-  end
-
+require 'rdoc/task'
+RDoc::Task.new do |rdoc|
+  version = File.read('VERSION') rescue ''
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title = "ipaddress #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-desc "Open an irb session preloaded with this library"
+task :default => :test
+
+desc "Open an IRB session preloaded with this library."
 task :console do
   sh "irb -rubygems -I lib -r ipaddress.rb"
 end
 
-desc "Look for TODO and FIXME tags in the code"
+desc "Display FIXME, TODO and TBD tags in the code."
 task :todo do
-  def egrep(pattern)
-    Dir['**/*.rb'].each do |fn|
-      count = 0
-      open(fn) do |f|
-        while line = f.gets
-          count += 1
-          if line =~ pattern
-            puts "#{fn}:#{count}:#{line}"
-          end
+  todos = []
+  Dir['**/*.rb'].each do |filename|
+    count = 0
+    open(filename) do |file|
+      while line = file.gets
+        count += 1
+        if line =~ /(FIXME|TODO|TBD)/
+          todos << "#{filename}:#{count}:#{line}"
         end
       end
     end
   end
-  egrep /(FIXME|TODO|TBD)/
+
+  puts todos.any? ? todos : 'None found.'
 end
