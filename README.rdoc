@@ -69,49 +69,47 @@ IPAddr. However it works slightly different, as we will see.
 
 === Create a new IPv4 address
 
-The usual way to express an IP Address is using its dotted decimal
-form, such as 172.16.10.1, and a prefix, such as 24, separated by a
-slash. 
+The usual way to express an IP Address is using dotted decimal notation, such
+as 172.16.10.1, and a prefix, such as 24, separated by a slash. 
 
   172.16.10.1/24
 
-To create a new IPv4 object, you can use IPv4 own class
+To create a new IPv4 object, you can use the IPv4 class
 
   ip = IPAddress::IPv4.new "172.16.10.1/24"
 
-or, in a easier way, using the IPAddress parse method
+or, an easier way, using the IPAddress parse method
 
   ip = IPAddress.parse "172.16.10.1/24"
 
-which accepts and parses any kind of IP (IPv4, IPV6 and 
-IPv4 IPv6 Mapped addresses).
+which tries parse any kind of common IP (IPv4, IPV6 and 
+IPv4 IPv6 Mapped addresses) notation.
 
 If you like syntactic sugar, you can use the wrapper method
 IPAddress(), which is built around IPAddress::parse:
 
   ip = IPAddress "172.16.10.1/24"
 
-You can specify an IPv4 address in any of two ways:
+You can specify an IPv4 address in two ways:
 
   IPAddress "172.16.10.1/24"
   IPAddress "172.16.10.1/255.255.255.0"
   
-In this example, prefix /24 and netmask 255.255.255.0 are the same and
-you have the flexibility to use either one of them.
+In these examples, the netmask is specified using either prefix notation, ex.
+/24, or dotted decimal notation, ex. 255.255.255.0.  They are the same and you
+have the flexibility to use either.
 
-If you don't explicitly specify the prefix (or the subnet mask), 
-IPAddress thinks you're dealing with host addresses and not with 
-networks. Therefore, the default prefix will be /32, or
-255.255.255.255. For example:
+If you don't provide the subnet mask, IPAddress will assume you are dealing
+with hosts and use a 32-bit mask.  Therefore, the default prefix will be /32,
+or 255.255.255.255. For example:
 
-  # let's declare an host address
+  # Declare a host address.
   host = IPAddress::IPv4.new "10.1.1.1"
 
-  puts host.to_string
-    #=> "10.1.1.1/32"
+  puts host.to_string #=> "10.1.1.1/32"
   
-The new created object has prefix /32, which is the same 
-as we created the following:
+The new IPAddress has prefix /32, which is the same 
+doing the following:
 
   host = IPAddress::IPv4.new "10.1.1.1/32"
   
@@ -121,73 +119,60 @@ Once created, you can obtain the attributes for an IPv4 object:
 
   ip = IPAddress("172.16.10.1/24")
 
-  ip.address
-    #=> "172.16.10.1"
-  ip.prefix
-    #=> 24
+  ip.address   #=> "172.16.10.1"
+  ip.prefix    #=> 24
 
-In case you need to retrieve the netmask in IPv4 format, you can use
-the IPv4#netmask method:
+To retrieve the netmask in dotted-decimal notation, use IPv4#netmask:
 
-  ip.netmask
-    #=> "255.255.255.0"
+  ip.netmask   #=> "255.255.255.0"
 
-A special attribute, IPv4#octets, is available to get the four 
-decimal octets from the IP address:
+IPv4#octets is available to access the four decimal octets from the IP address:
 
-  ip.octets
-    #=> [172,16,10,1]
+  ip.octets    #=> [172,16,10,1]
 
-Shortcut method IPv4#[], provides access to a given octet whithin the
-range:
+The shortcut method IPv4#[], provides access to a given octet:
 
-  ip[1]
-    #=> 16
+  ip[1]        #=> 16
 
-If you need to print out the IPv4 address in a canonical form, you can
-use IPv4#to_string
+To print the IPv4 address in a canonical form, use IPv4#to_string:
 
-  ip.to_string
-    #=> "172.16.10.l/24"
+  ip.to_string #=> "172.16.10.l/24"
 
 === Changing netmask
     
-You can set a new prefix (netmask) after creating an IPv4 
-object. For example:
+Use the IPv4#prefix method to assign new netmask using prefix notation after creating an IPv4 object:
 
   ip.prefix = 25
 
-  ip.to_string
-    #=> "172.16.10.l/25"
+  ip.to_string #=> "172.16.10.1/25"
     
-If you need to use a netmask in IPv4 format, you can achive so by
-using the IPv4#netmask= method
+To set the netmask using dotted-decimal notation, use the IPv4#netmask= method:
 
   ip.netmask = "255.255.255.252"
 
-  ip.to_string
-    #=> "172.16.10.1/30"
+  ip.to_string #=> "172.16.10.1/30"
 
 === Working with networks, broadcasts and addresses
 
-Some very important topics in dealing with IP addresses are the
-concepts of +network+ and +broadcast+, as well as the addresses
-included in a range.
+Several important concepts when dealing with IP addresses are +network+,
++broadcast+, and the addresses included in a given range.
 
-When you specify an IPv4 address such as "172.16.10.1/24", you are
-actually handling two different information: 
- 
-* The IP address itself, "172.16.10.1"
-* The subnet mask which indicates the network
+When you write an IPv4 address in prefix notation, such as "172.16.10.1/24",
+you are actually specifying two different pieces of information: 
 
-The network number is the IP which has all zeroes in the host
-portion. In our example, because the prefix is 24, we identify our
-network number to have the last 8 (32-24) bits all zeroes.  Thus, IP
-address "172.16.10.1/24" belongs to network "172.16.10.0/24".
+* The IP address itself, "172.16.10.1".
+* The subnet mask, which is used to determine the network.
 
-This is very important because, for instance, IP "172.16.10.1/16" is
-very different to the previous one, belonging to the very different
-network "172.16.0.0/16".
+The subnet mask specifies the number of bits to be used in the network address.
+In the example above with a prefix of /24, the network number is therefore the
+first 24 bits (0-24) of the IP address, and the host number is the remaining 8
+bits (25-32).  Thus, the IP address "172.16.10.1/24" belongs to network
+"172.16.10.0/24".
+
+This is very important because, for example, the address "172.16.10.1/16" is
+very different to the previous one with a /24 prefix.  "172.16.10.1/16" is on
+network "172.16.0.0/16", while "172.16.10.1/24" is on network "172.16.10.0",
+and consequently they will be handled differently by routers.
 
 ==== Networks
 
@@ -203,10 +188,10 @@ address:
   net.to_string
     #=> "172.16.10.0/24"
 
-Method IPv4#network creates a new IPv4 object from the network
-number, calculated after the original object. We want to outline here
-that the network address is a perfect legitimate IPv4 address, which
-just happen to have all zeroes in the host portion. 
+Method IPv4#network returns a new IPv4 object from the network number,
+calculated using the original IP address. We want to emphasize here that the
+network address is a perfect legitimate IPv4 address, which just happens to
+have all zeroes in the host portion. 
 
 You can use method IPv4#network? to check whether an IP address is a
 network or not:
@@ -214,18 +199,22 @@ network or not:
   ip1 = IPAddress "172.16.10.1/24"
   ip2 = IPAddress "172.16.10.4/30"
 
-  ip1.network?
-    #=> false
-  ip2.network?
-    #=> true
+  ip1.network?    #=> false
+  ip2.network?    #=> true
+
+The former is a network because the final decimal octet, 4, is 00000100 in
+8-bits of binary.  The final octet is bits 25-32 when considering the address'
+entire 32-bits of binary.  The netmask has been specified to be 30-bits, thus
+the first six bits of the last octet are taken to be part of the network
+address.  Thus the IP address "172.16.10.4/30" is the network boundary.  The
+final two bits are host address.
 
 ==== Broadcast
 
-The broadcast address is the contrary than the network number: where
-the network number has all zeroes in the host portion, the broadcast
-address has all one's. For example, ip "172.16.10.1/24" has broadcast
-"172.16.10.255/24", where ip "172.16.10.1/16" has broadcast
-"172.16.255.255/16".
+The broadcast address is the complement of the network address: where the
+network number has all zeroes in the host portion, the broadcast address has
+all one's. For example, IP "172.16.10.1/24" has broadcast "172.16.10.255/24",
+where IP "172.16.10.1/16" has broadcast "172.16.255.255/16".
 
 Method IPv4#broadcast has the same behavior as is #network
 counterpart: it creates a new IPv4 object to handle the broadcast
@@ -242,11 +231,12 @@ address:
 
 ==== Addresses, ranges and iterators
 
-So we see that the netmask essentially specifies a range for IP
-addresses that are included in a network: all the addresses between
-the network number and the broadcast. IPAddress has many methods to
-iterate between those addresses. Let's start with IPv4#each, which
-iterates over all addresses in a range
+The netmask allows us to determine a network, and therefore the range of IP
+addresses included in that network: all the addresses between the network
+number and the broadcast. IPAddress has many methods to iterate between those
+addresses.
+
+Let's start with IPv4#each, which iterates over all addresses in a range:
 
   ip = IPAddress "172.16.10.1/24"
 
@@ -258,8 +248,8 @@ It is important to note that it doesn't matter if the original IP is a
 host IP or a network number (or a broadcast address): the #each method
 only considers the range that the original IP specifies. 
 
-If you only want to iterate over hosts IP, use the IPv4#each_host
-method:
+If you only want to iterate over host IP addresses omitting the network and
+broadcast addresses, use the IPv4#each_host method:
 
   ip = IPAddress "172.16.10.1/24"
 
@@ -288,8 +278,7 @@ Let's take the following IPv4 as an example:
 
   ip = IPAddress "172.16.10.1/24"
 
-  ip.address
-    #=> "172.16.10.1"
+  ip.address   #=> "172.16.10.1"
 
 The first thing to highlight here is that all these conversion methods
 only take into consideration the address portion of an IPv4 object and
@@ -297,22 +286,19 @@ not the prefix (netmask).
 
 So, to express the address in binary format, use the IPv4#bits method:
 
-  ip.bits
-    #=> "10101100000100000000101000000001"
+  ip.bits      #=> "10101100000100000000101000000001"
 
 To calculate the 32 bits unsigned int format of the ip address, use
 the IPv4#to_u32 method
 
-  ip.to_u32
-    #=> 2886732289
+  ip.to_u32    #=> 2886732289
 
 This method is the equivalent of the Unix call pton(), expressing an
 IP address in the so called +network byte order+ notation. However, if
 you want to transmit your IP over a network socket, you might need to
 transform it in data format using the IPv4#data method:
 
-  ip.data
-    #=> "\254\020\n\001"
+  ip.data       #=> "\254\020\n\001"
 
 Finally, you can transform an IPv4 address into a format which is
 suitable to use in IPv4-IPv6 mapped addresses:
@@ -326,7 +312,7 @@ IPAddress allows you to create and manipulate objects using the old
 and deprecated (but apparently still popular) classful networks concept.
 
 Classful networks and addresses don't have a prefix: their subnet mask
-is univocally identified by their address, and therefore diveded in classes.
+is univocally identified by their address, and therefore divided in classes.
 As per RFC 791, these classes are:
 
 * Class A, from 0.0.0.0 to 127.255.255.255
@@ -339,7 +325,7 @@ prefix number, classes D and E are not considered.
 To create a classful IP and prefix from an IP address, use the 
 IPv4::parse_classful method:
 
-  # classful ip 
+  # Create a classful IP address.
   ip = IPAddress::IPv4::parse_classful "10.1.1.1"
 
   ip.prefix
@@ -956,6 +942,3 @@ feedback and bug reports.
 == Copyright
 
 Copyright (c) 2009-2011 Marco Ceresa. See LICENSE for details.
-
-
- 
