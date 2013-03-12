@@ -51,7 +51,7 @@ class IPv4Test < Test::Unit::TestCase
   end
 
   def test_initialize
-    @valid_ipv4.keys.each do |ip_notation|
+    @valid_ipv4.each_key do | ip_notation |
       assert_instance_of @klass, @klass.new(ip_notation)
     end
     assert_instance_of IPAddress::Prefix32, @ip.prefix
@@ -74,10 +74,10 @@ class IPv4Test < Test::Unit::TestCase
   end
 
   def test_attributes
-    @valid_ipv4.each do |ip_notation, expected_components|
+    @valid_ipv4.each do | ip_notation, (address, prefix) |
       ip = @klass.new(ip_notation)
-      assert_equal expected_components[0], ip.address
-      assert_equal expected_components[1], ip.prefix.to_i
+      assert_equal address, ip.address
+      assert_equal prefix,  ip.prefix.to_i
     end
   end
 
